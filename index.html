@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>One Page FI Guide</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+<link rel="stylesheet" type="text/css" href="index.css">
+<script src="marked.js"></script>
+<script>
+(function () {
+  'use strict';
+  
+  function showPosts(posts) {
+    const postsContainer = document.createElement('div');
+    postsContainer.classList.add('postsContainer');
+
+    posts.forEach(post => {
+      const title = document.createElement('div');
+      title.classList.add('title');
+      title.innerHTML = post.title;
+      const date = document.createElement('div');
+      date.classList.add('date');
+      date.innerHTML = new Date(post.created_at).toDateString();
+      const postContainer = document.createElement('a');
+      postContainer.classList.add('postContainer');
+      postContainer.setAttribute('href',`?${post.number}`);
+      postContainer.append(date);
+      postContainer.append(title);
+      postsContainer.append(postContainer);
+    });
+    
+    const container = document.querySelector('.container');
+    container.append(postsContainer);
+  }
+
+  function showPost(post) {
+    const date = document.createElement('div');
+    date.classList.add('date');
+    date.innerHTML = new Date(post.created_at).toDateString();
+    const title = document.createElement('div');
+    title.classList.add('title');
+    title.innerHTML = post.title;
+    const body = document.createElement('div');
+    body.classList.add('body');
+    body.innerHTML = marked(post.body);
+    const button = document.createElement('a');
+    button.classList.add('button');
+    button.setAttribute('href',`/`);
+    button.innerHTML = 'See More Posts';
+    const postContainer = document.createElement('div');
+    postContainer.classList.add('postContainer');
+    postContainer.append(date);
+    postContainer.append(title);
+    postContainer.append(body);
+    postContainer.append(button);
+
+    const content = document.querySelector('.content');
+    content.prepend(postContainer);
+  }
+  
+  function showComments(comments, issueUrl) {
+    const commentsContainer = document.createElement('div');
+    commentsContainer.classList.add('commentsContainer');
+
+    comments.forEach((comment, index) => {
+      const user = document.createElement('span');
+      user.classList.add('user');
+      user.innerHTML = `${comment.user.login}&nbsp;&nbsp;`;
+      const date = document.createElement('span');
+      date.classList.add('date');
+      date.innerHTML = new Date(comment.created_at).toDateString();
+      const body = document.createElement('div');
+      body.classList.add('body');
+      body.innerHTML = marked(comment.body);
+      const commentContainer = document.createElement('div');
+      commentContainer.classList.add('commentContainer');
+      const commentHeader = document.createElement('div');
+      commentHeader.classList.add('commentHeader');
+      commentHeader.append(user);
+      commentHeader.append(date);
+      commentContainer.append(commentHeader);
+      commentContainer.append(body);
+      commentsContainer.append(commentContainer);
+    });
+
+    const commentUrl = comments.length > 0 ? comments[comments.length - 1].html_url : issueUrl;
+    const button = document.createElement('a');
+    button.classList.add('button');
+    button.setAttribute('href', commentUrl);
+    button.setAttribute('target', '_blank');
+    button.innerHTML = 'Leave Comments Via Github';
+    commentsContainer.append(button);
+
+    const content = document.querySelector('.content');
+    content.append(commentsContainer);
+  }
+
+  window.addEventListener('load', () => {
+    const search = window.location.search.slice(1) ? `/${window.location.search.slice(1)}` : ''
+    const url = `https://api.github.com/repos/onepageguide/onepageguide.github.io/issues${search}?access_token=b075793b78a576162bef6bb1ba18fbbd8c046903&sort=created&direction=desc&creator=onepageguide`;
+
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) {
+          window.location.replace('/404');
+          return false;
+        }
+        return response.json();
+      })
+      .then((json) => {
+        if (!json) { return; }
+
+        if (Array.isArray(json)) {
+          showPosts(json);
+        } else {
+          const content = document.createElement('div');
+          content.classList.add('content');
+          const container = document.querySelector('.container');
+          container.append(content);
+          showPost(json);
+          fetch(json.comments_url)
+            .then((response) => {
+              return response.json();
+            })
+            .then((comments) => {
+              showComments(comments, json.html_url);
+            });
+        }
+      });
+  });
+}());
+</script>
+<script data-ad-client="ca-pub-4108109634010608" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+</head>
+
+<body>
+<div class="header">
+  <a href="/">
+    <span class="mainTitle">One Page Guide</span>
+    <span class="subTitle">To Your&nbsp;<span class="emphasis">Financial Independence</span></span>
+  </a>
+</div>
+<div class="container"></div>
+</body>
+</html>
